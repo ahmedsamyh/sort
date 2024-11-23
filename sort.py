@@ -2,6 +2,8 @@ import random
 import sys
 import time
 
+sys.setrecursionlimit(2**int(32/2))
+
 from threading import Thread
 
 def quicksort(arr, depth) -> []:
@@ -89,11 +91,15 @@ def time_bubblesort(arr):
 
 
 def usage(program: str):
-    print(f"{program} [SORT_ALGORITHM | N] [N]")
+    print(f"Usage: {program} [SORT_ALGORITHM | N] [N]")
 
 def hhelp(program: str):
           print(f"\tSORT_ALGORITHM can be [\"bubblesort\", \"quicksort\"]; By default does every algorithm")
           print(f"\tN is the number of elements in the list to be sorted; Default is 1000")
+
+def error(msg: str):
+    print(f"ERROR: {msg}", file=sys.stderr)
+    exit(1)
 
 def main():
 
@@ -106,6 +112,8 @@ def main():
         cmd = sys.argv.pop(0)
         if cmd.isdigit():
             N = int(cmd)
+            if N <= 0:
+                error("N cannot be <= 0 dummy")
             cmd = ""
     except Exception:
         pass
@@ -118,6 +126,8 @@ def main():
 
     try:
         N = int(sys.argv.pop(0))
+        if N <= 0:
+            error("N cannot be <= 0 dummy")
     except Exception:
         pass
     MAX = 2**3
