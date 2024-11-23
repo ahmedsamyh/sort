@@ -60,62 +60,69 @@ def bubblesort_best(arr) -> []:
                 arr_sorted = False
         sorted_count += 1
 
-
-_timing_from: float = 0.0
-_timing_label: str = ''
-
-def time_from(label: str):
-    global _timing_from, _timing_label
-
-    _timing_label = label
-    _timing_from = time.time()
-
-def time_here():
-    global _timing_from
-
-    elapsed_timing = time.time() - _timing_from
-
-    print(f"PROFILE: [{_timing_label}] took %.2fs" % elapsed_timing)
-
-
 def time_quicksort(arr):
     t1 = time.time()
     quicksort(arr.copy(), 0)
     print(f"Quick Sort took %.2fs" % (time.time() - t1))
 
+# def time_bubblesort(arr):
+#     t1 = time.time()
+#     bubblesort(arr.copy())
+#     print(f"Bubble Sort took %.2fs" % (time.time() - t1))
+
+# def time_bubblesort_better(arr):
+#     t1 = time.time()
+#     bubblesort_better(arr.copy())
+#     print(f"Bubble Sort Better took %.2fs" % (time.time() - t1))
+
+# def time_bubblesort_best(arr):
+#     t1 = time.time()
+#     bubblesort_best(arr.copy())
+#     print(f"Bubble Sort Best took %.2fs" % (time.time() - t1))
+
 def time_bubblesort(arr):
-    t1 = time.time()
-    bubblesort(arr.copy())
-    print(f"Bubble Sort took %.2fs" % (time.time() - t1))
-
-def time_bubblesort_better(arr):
-    t1 = time.time()
-    bubblesort_better(arr.copy())
-    print(f"Bubble Sort Better took %.2fs" % (time.time() - t1))
-
-def time_bubblesort_best(arr):
     t1 = time.time()
     bubblesort_best(arr.copy())
     print(f"Bubble Sort Best took %.2fs" % (time.time() - t1))
 
 
+
 def main():
-    N = 1000
+
+    program: str = sys.argv.pop(0)
+
+    N: int = 1000
+
+    cmd: str = ""
     try:
-        N = int(sys.argv[1])
-    except:
+        cmd = sys.argv.pop(0)
+        if cmd.isdigit():
+            N = int(cmd)
+            cmd = ""
+    except Exception:
         pass
 
-    MAX = 2**32
+    try:
+        N = int(sys.argv.pop(0))
+    except Exception:
+        pass
+    MAX = 2**3
     arr = [random.randint(0, MAX) for _ in range(N)]
 
     print(f"Sorting {N} elements:")
-    threads = []
 
-    threads.append(Thread(target=time_quicksort, args=[arr]))
-    threads.append(Thread(target=time_bubblesort, args=[arr]))
-    threads.append(Thread(target=time_bubblesort_better, args=[arr]))
-    threads.append(Thread(target=time_bubblesort_best, args=[arr]))
+    threads = []
+    match cmd.lower():
+        case "":
+            threads.append(Thread(target=time_bubblesort, args=[arr]))
+            threads.append(Thread(target=time_quicksort, args=[arr]))
+        case "bubble" | "bubblesort":
+            threads.append(Thread(target=time_bubblesort, args=[arr]))
+        case "quick" | "quicksort":
+            threads.append(Thread(target=time_quicksort, args=[arr]))
+        case _:
+            print(f"ERROR: Invalid command '{cmd}'")
+            exit(1)
 
     for t in threads:
         t.start()
