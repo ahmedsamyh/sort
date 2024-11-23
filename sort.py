@@ -87,6 +87,14 @@ def time_bubblesort(arr):
 
 
 
+
+def usage(program: str):
+    print(f"{program} [SORT_ALGORITHM | N] [N]")
+
+def hhelp(program: str):
+          print(f"\tSORT_ALGORITHM can be [\"bubblesort\", \"quicksort\"]; By default does every algorithm")
+          print(f"\tN is the number of elements in the list to be sorted; Default is 1000")
+
 def main():
 
     program: str = sys.argv.pop(0)
@@ -101,6 +109,12 @@ def main():
             cmd = ""
     except Exception:
         pass
+
+    match cmd:
+        case "help":
+            usage(program)
+            hhelp(program)
+            exit(0)
 
     try:
         N = int(sys.argv.pop(0))
