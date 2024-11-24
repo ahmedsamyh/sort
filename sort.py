@@ -6,7 +6,7 @@ sys.setrecursionlimit(2**int(32/2))
 
 from threading import Thread
 
-def quicksort(arr, depth) -> []:
+def quicksort(arr, depth) -> list[int]:
     if len(arr) == 1:
         return [arr[0]]
 
@@ -34,57 +34,73 @@ def quicksort(arr, depth) -> []:
 
     return nl
 
-def bubblesort(arr) -> []:
-    for _ in range(len(arr)):
-        for i in range(len(arr)-1):
-            if arr[i] > arr[i+1]:
-                arr[i], arr[i+1] = arr[i+1], arr[i]
+# def bubblesort(arr) -> []:
+#     for _ in range(len(arr)):
+#         for i in range(len(arr)-1):
+#             if arr[i] > arr[i+1]:
+#                 arr[i], arr[i+1] = arr[i+1], arr[i]
 
-    return arr
+#     return arr
 
-def bubblesort_better(arr) -> []:
-    arr_sorted = False
-    while not arr_sorted:
-        arr_sorted = True
-        for i in range(len(arr)-1):
-            if arr[i] > arr[i+1]:
-                arr[i], arr[i+1] = arr[i+1], arr[i]
-                arr_sorted = False
+# def bubblesort_better(arr) -> []:
+#     arr_sorted = False
+#     while not arr_sorted:
+#         arr_sorted = True
+#         for i in range(len(arr)-1):
+#             if arr[i] > arr[i+1]:
+#                 arr[i], arr[i+1] = arr[i+1], arr[i]
+#                 arr_sorted = False
 
-def bubblesort_best(arr) -> []:
+def bubblesort(arr) -> list[int]:
+    result = arr.copy()
     arr_sorted = False
     sorted_count = 0
     while not arr_sorted:
         arr_sorted = True
         for i in range(len(arr)-1-sorted_count):
-            if arr[i] > arr[i+1]:
-                arr[i], arr[i+1] = arr[i+1], arr[i]
+            if result[i] > result[i+1]:
+                result[i], result[i+1] = result[i+1], result[i]
                 arr_sorted = False
         sorted_count += 1
+    return result
+
+def selectionsort(arr) -> list[int]:
+    result = arr.copy()
+    for i in range(len(arr)-1):
+        for j in range(i+1, len(arr)):
+            if result[i] > result[j]:
+                result[i], result[j] = result[j], result[i]
+        # print(f"Sorted: {result[0:i]} | \tUnsorted: {result[i:len(result)]}")
+    return result
 
 def time_quicksort(arr):
     t1 = time.time()
-    quicksort(arr.copy(), 0)
+    quicksort(arr, 0)
     print(f"Quick Sort took %.2fs" % (time.time() - t1))
+
+def time_selectionsort(arr):
+    t1 = time.time()
+    selectionsort(arr)
+    print(f"Selection Sort took %.2fs" % (time.time() - t1))
 
 # def time_bubblesort(arr):
 #     t1 = time.time()
-#     bubblesort(arr.copy())
+#     bubblesort(arr)
 #     print(f"Bubble Sort took %.2fs" % (time.time() - t1))
 
 # def time_bubblesort_better(arr):
 #     t1 = time.time()
-#     bubblesort_better(arr.copy())
+#     bubblesort_better(arr)
 #     print(f"Bubble Sort Better took %.2fs" % (time.time() - t1))
 
 # def time_bubblesort_best(arr):
 #     t1 = time.time()
-#     bubblesort_best(arr.copy())
+#     bubblesort_best(arr)
 #     print(f"Bubble Sort Best took %.2fs" % (time.time() - t1))
 
 def time_bubblesort(arr):
     t1 = time.time()
-    bubblesort_best(arr.copy())
+    bubblesort(arr)
     print(f"Bubble Sort Best took %.2fs" % (time.time() - t1))
 
 
@@ -94,7 +110,7 @@ def usage(program: str):
     print(f"Usage: {program} [SORT_ALGORITHM | N] [N]")
 
 def hhelp(program: str):
-          print(f"\tSORT_ALGORITHM can be [\"bubblesort\", \"quicksort\"]; By default does every algorithm")
+          print(f"\tSORT_ALGORITHM can be [\"bubblesort\", \"quicksort\", \"selection\"]; By default does every algorithm")
           print(f"\tN is the number of elements in the list to be sorted; Default is 1000")
 
 def error(msg: str):
@@ -130,7 +146,7 @@ def main():
             error("N cannot be <= 0 dummy")
     except Exception:
         pass
-    MAX = 2**3
+    MAX = 2**32
     arr = [random.randint(0, MAX) for _ in range(N)]
 
     print(f"Sorting {N} elements:")
@@ -140,10 +156,13 @@ def main():
         case "":
             threads.append(Thread(target=time_bubblesort, args=[arr]))
             threads.append(Thread(target=time_quicksort, args=[arr]))
+            threads.append(Thread(target=time_selectionsort, args=[arr]))
         case "bubble" | "bubblesort":
             threads.append(Thread(target=time_bubblesort, args=[arr]))
         case "quick" | "quicksort":
             threads.append(Thread(target=time_quicksort, args=[arr]))
+        case "selection" | "selectionsort":
+            threads.append(Thread(target=time_selectionsort, args=[arr]))
         case _:
             print(f"ERROR: Invalid command '{cmd}'")
             exit(1)
