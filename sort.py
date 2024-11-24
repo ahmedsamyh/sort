@@ -1,10 +1,19 @@
 import random
 import sys
 import time
+from typing import Callable
 
 sys.setrecursionlimit(2**int(32/2))
 
 from threading import Thread
+
+def todo(label: str):
+    print(f"TODO: {label}")
+    exit(1)
+
+DEFAULT_N: int = 1000
+N: int = DEFAULT_N
+MAX_VALUE: int = 2**32
 
 def quicksort(arr, depth) -> list[int]:
     if len(arr) == 1:
@@ -73,72 +82,144 @@ def selectionsort(arr) -> list[int]:
         # print(f"Sorted: {result[0:i]} | \tUnsorted: {result[i:len(result)]}")
     return result
 
-def time_quicksort(arr):
+def time_quicksort(arr: list[int]):
     t1 = time.time()
     quicksort(arr, 0)
     print(f"Quick Sort took %.2fs" % (time.time() - t1))
 
-def time_selectionsort(arr):
+def time_selectionsort(arr: list[int]):
     t1 = time.time()
     selectionsort(arr)
     print(f"Selection Sort took %.2fs" % (time.time() - t1))
 
-# def time_bubblesort(arr):
-#     t1 = time.time()
-#     bubblesort(arr)
-#     print(f"Bubble Sort took %.2fs" % (time.time() - t1))
-
-# def time_bubblesort_better(arr):
-#     t1 = time.time()
-#     bubblesort_better(arr)
-#     print(f"Bubble Sort Better took %.2fs" % (time.time() - t1))
-
-# def time_bubblesort_best(arr):
-#     t1 = time.time()
-#     bubblesort_best(arr)
-#     print(f"Bubble Sort Best took %.2fs" % (time.time() - t1))
-
-def time_bubblesort(arr):
+def time_bubblesort(arr: list[int]):
     t1 = time.time()
     bubblesort(arr)
     print(f"Bubble Sort Best took %.2fs" % (time.time() - t1))
 
-
+def time_everything(arr: list[int]):
+    time_bubblesort(arr)
+    time_bubblesort(arr)
+    time_selectionsort(arr)
 
 
 def usage(program: str):
-    print(f"Usage: {program} [SORT_ALGORITHM | N] [N]")
+    print(f"Usage: {program} <subcommand> [Flags] [Algorithm][s]")
+
+
+valid_algorithms: dict[str, Callable[ [list[int]], None]] = {
+        "quick": time_quicksort,
+        "bubble": time_bubblesort,
+        "selection": time_selectionsort,
+        "everything": time_everything
+ }
 
 def hhelp(program: str):
-          print(f"\tSORT_ALGORITHM can be [\"bubblesort\", \"quicksort\", \"selection\"]; By default does every algorithm")
-          print(f"\tN is the number of elements in the list to be sorted; Default is 1000")
+    print((f"Subcommands: \n"
+           f"    time            - Measure the time it takes to sort an array of N elements using the specified Algorithm.\n"
+           f"    help            - Prints this help message.\n"
+           f"\n"
+           f"    Algorithm       - One or more of bubblesort, quicksort, selectionsort, everything; DEFAULT: everything.\n"
+           f"\n"
+           f"Flags: \n"
+           f"    -n              - Specifies the number of elements in the array; DEFAULT: {DEFAULT_N}."))
 
 def error(msg: str):
     print(f"ERROR: {msg}", file=sys.stderr)
-    exit(1)
+
+def calculate_random_array() -> list[int]:
+    global N
+    if N <= 0:
+        print(f"WARNING: N '{N}' was invalid, changing to default value '{DEFAULT_N}'")
+        N = DEFAULT_N
+    return [random.randint(0, MAX_VALUE) for _ in range(N)]
+
+def parse_flag(program: str) -> bool:
+    if len(sys.argv) <= 0: return ""
+
+    flag: str = ""
+    if sys.argv[0].startswith('-'):
+        flag = sys.argv.pop(0)
+
+    match flag:
+        case 'n':
+            global N
+            def invalid_n_func() -> None:
+                error("Please provide a number after -n!")
+                usage(program)
+                hhelp(program)
+                exit(1)
+
+            if len(sys.argv) <= 0:
+                invalid_n_func()
+            try:
+                N = int(sys.argv.pop(0))
+            except ValueError:
+                invalid_n_func()
+            return True
+        case '':
+            pass
+        case _:
+            error(f"Invalid flag '{flag}'")
+            usage(program)
+            hhelp(program)
+            exit(1)
+    return False
+
+def time_subcommand(program: str):
+    algorithms: len[str] = []
+
+    while parse_flag(program):
+        pass
+
+    while len(sys.argv) > 0:
+        algo: string = sys.argv.pop(0).lower()
+        sort_prefix: bool = algo.endswith("sort")
+        algo.removeprefix("sort")
+        if algo in valid_algorithms:
+            if not sort_prefix: algo += "sort"
+            algorithms.append(algo)
+        else:
+            error(f"Invalid Aglorithm '{algo}'")
+            usage(program)
+            hhelp(program)
+            exit(1)
+
+    # NOTE: Do every algorithms when nothing is provided
+    if len(algorithms) <= 0: algorithms.append("everythingsort")
+
+
+    arr: list[int] = calculate_random_array()
+
+    for a in algorithms:
+        a = a.removesuffix("sort")
+        valid_algorithms[a](arr)
 
 def main():
 
     program: str = sys.argv.pop(0)
 
-    N: int = 1000
+    # Parse subcommand
+    subcmd: str = ""
+    if len(sys.argv) > 0: subcmd = sys.argv.pop(0)
 
-    cmd: str = ""
-    try:
-        cmd = sys.argv.pop(0)
-        if cmd.isdigit():
-            N = int(cmd)
-            if N <= 0:
-                error("N cannot be <= 0 dummy")
-            cmd = ""
-    except Exception:
-        pass
-
-    match cmd:
+    match subcmd.lower():
         case "help":
             usage(program)
             hhelp(program)
             exit(0)
+        case "time":
+            time_subcommand(program)
+        case '':
+            error(f"Please provide a subcommand")
+            usage(program)
+            hhelp(program)
+            exit(1)
+        case _:
+            error(f"Invalid subcommand '{subcmd}'")
+            usage(program)
+            hhelp(program)
+            exit(1)
 
     try:
         N = int(sys.argv.pop(0))
@@ -146,26 +227,25 @@ def main():
             error("N cannot be <= 0 dummy")
     except Exception:
         pass
-    MAX = 2**32
-    arr = [random.randint(0, MAX) for _ in range(N)]
+
 
     print(f"Sorting {N} elements:")
 
     threads = []
-    match cmd.lower():
-        case "":
-            threads.append(Thread(target=time_bubblesort, args=[arr]))
-            threads.append(Thread(target=time_quicksort, args=[arr]))
-            threads.append(Thread(target=time_selectionsort, args=[arr]))
-        case "bubble" | "bubblesort":
-            threads.append(Thread(target=time_bubblesort, args=[arr]))
-        case "quick" | "quicksort":
-            threads.append(Thread(target=time_quicksort, args=[arr]))
-        case "selection" | "selectionsort":
-            threads.append(Thread(target=time_selectionsort, args=[arr]))
-        case _:
-            print(f"ERROR: Invalid command '{cmd}'")
-            exit(1)
+    # match subcmd.lower():
+    #     case "":
+    #         threads.append(Thread(target=time_bubblesort, args=[arr]))
+    #         threads.append(Thread(target=time_quicksort, args=[arr]))
+    #         threads.append(Thread(target=time_selectionsort, args=[arr]))
+    #     case "bubble" | "bubblesort":
+    #         threads.append(Thread(target=time_bubblesort, args=[arr]))
+    #     case "quick" | "quicksort":
+    #         threads.append(Thread(target=time_quicksort, args=[arr]))
+    #     case "selection" | "selectionsort":
+    #         threads.append(Thread(target=time_selectionsort, args=[arr]))
+    #     case _:
+    #         print(f"ERROR: Invalid command '{subcmd}'")
+    #         exit(1)
 
     for t in threads:
         t.start()
