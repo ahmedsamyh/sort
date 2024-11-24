@@ -98,10 +98,16 @@ def time_bubblesort(arr: list[int]):
     print(f"Bubble Sort Best took %.2fs" % (time.time() - t1))
 
 def time_everything(arr: list[int]):
-    time_bubblesort(arr)
-    time_bubblesort(arr)
-    time_selectionsort(arr)
+    threads: list[Thread] = []
+    threads.append(Thread(target=time_bubblesort, args=[arr]))
+    threads.append(Thread(target=time_bubblesort, args=[arr]))
+    threads.append(Thread(target=time_selectionsort, args=[arr]))
 
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
 
 def usage(program: str):
     print(f"Usage: {program} <subcommand> [Flags] [Algorithm][s]")
@@ -141,6 +147,7 @@ def parse_flag(program: str) -> bool:
     if sys.argv[0].startswith('-'):
         flag = sys.argv.pop(0)
 
+    flag = flag.removeprefix('-')
     match flag:
         case 'n':
             global N
@@ -188,8 +195,9 @@ def time_subcommand(program: str):
     # NOTE: Do every algorithms when nothing is provided
     if len(algorithms) <= 0: algorithms.append("everythingsort")
 
-
     arr: list[int] = calculate_random_array()
+
+    print(f"Sorting {N} elements")
 
     for a in algorithms:
         a = a.removesuffix("sort")
@@ -220,38 +228,6 @@ def main():
             usage(program)
             hhelp(program)
             exit(1)
-
-    try:
-        N = int(sys.argv.pop(0))
-        if N <= 0:
-            error("N cannot be <= 0 dummy")
-    except Exception:
-        pass
-
-
-    print(f"Sorting {N} elements:")
-
-    threads = []
-    # match subcmd.lower():
-    #     case "":
-    #         threads.append(Thread(target=time_bubblesort, args=[arr]))
-    #         threads.append(Thread(target=time_quicksort, args=[arr]))
-    #         threads.append(Thread(target=time_selectionsort, args=[arr]))
-    #     case "bubble" | "bubblesort":
-    #         threads.append(Thread(target=time_bubblesort, args=[arr]))
-    #     case "quick" | "quicksort":
-    #         threads.append(Thread(target=time_quicksort, args=[arr]))
-    #     case "selection" | "selectionsort":
-    #         threads.append(Thread(target=time_selectionsort, args=[arr]))
-    #     case _:
-    #         print(f"ERROR: Invalid command '{subcmd}'")
-    #         exit(1)
-
-    for t in threads:
-        t.start()
-
-    for t in threads:
-        t.join()
 
 if __name__ == '__main__':
     main()
