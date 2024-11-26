@@ -105,7 +105,7 @@ algorithms_time_func_map: dict[str, Callable[ [list[int]], None]] = {
 def hhelp(program: str):
     print((f"Subcommands: \n"
            f"    time [Algorithm][s]         - Measure the time it takes to sort an array of N elements using the specified Algorithm.\n"
-           f"    sort <arr> [Algorithm][s]   - Sort a given"
+           f"    print <arr> [Algorithm][s]  - Sort and print the given array.\n"
            f"    help                        - Prints this help message.\n"
            f"\n"
            f"    Algorithm                   - One or more of bubblesort, quicksort, selectionsort, everything; DEFAULT: everything.\n"
@@ -218,9 +218,9 @@ def print_bubblesort(arr: list[int]):
 
 def print_everything(arr: list[int]):
     threads: list[Thread] = []
-    threads.append(Thread(target=print_bubblesort, args=[arr]))
-    threads.append(Thread(target=print_bubblesort, args=[arr]))
-    threads.append(Thread(target=print_selectionsort, args=[arr]))
+    threads.append(Thread(target=print_quicksort, args=[arr.copy()]))
+    threads.append(Thread(target=print_bubblesort, args=[arr.copy()]))
+    threads.append(Thread(target=print_selectionsort, args=[arr.copy()]))
 
     for t in threads:
         t.start()
