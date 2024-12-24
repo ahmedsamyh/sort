@@ -1,14 +1,20 @@
 import random
 import sys
 import time
-from typing import Callable
+from typing import Callable, Tuple
+import logging, coloredlogs
+
+logging.basicConfig(level=logging.INFO)
+coloredlogs.install(level=logging.INFO)
+
+logger = logging.getLogger("sort")
 
 sys.setrecursionlimit(2**int(32/2))
 
 from threading import Thread
 
 def todo(label: str):
-    print(f"TODO: {label}")
+    logger.info(f"TODO: {label}")
     exit(1)
 
 DEFAULT_N: int = 1000
@@ -68,21 +74,24 @@ def selectionsort(arr) -> list[int]:
 def time_quicksort(arr: list[int]):
     t1 = time.time()
     quicksort(arr, 0)
-    print(f"Quick Sort took %.2fs" % (time.time() - t1))
+    et = (time.time() - t1)
+    logger.info(f"Quick {et: 16.2}s")
 
 def time_selectionsort(arr: list[int]):
     t1 = time.time()
     selectionsort(arr)
-    print(f"Selection Sort took %.2fs" % (time.time() - t1))
+    et = (time.time() - t1)
+    logger.info(f"Selec {et: 16.2}s")
 
 def time_bubblesort(arr: list[int]):
     t1 = time.time()
     bubblesort(arr)
-    print(f"Bubble Sort Best took %.2fs" % (time.time() - t1))
+    et = (time.time() - t1)
+    logger.info(f"Bubbl {et: 16.2}s")
 
 def time_everything(arr: list[int]):
     threads: list[Thread] = []
-    threads.append(Thread(target=time_bubblesort, args=[arr]))
+    threads.append(Thread(target=time_quicksort, args=[arr]))
     threads.append(Thread(target=time_bubblesort, args=[arr]))
     threads.append(Thread(target=time_selectionsort, args=[arr]))
 
@@ -93,7 +102,7 @@ def time_everything(arr: list[int]):
         t.join()
 
 def usage(program: str):
-    print(f"Usage: {program} <subcommand> [Flags] [Algorithm][s]")
+    logger.info(f"Usage: {program} <subcommand> [Flags] [Algorithm][s]")
 
 algorithms_time_func_map: dict[str, Callable[ [list[int]], None]] = {
         "quick":      time_quicksort,
@@ -102,29 +111,29 @@ algorithms_time_func_map: dict[str, Callable[ [list[int]], None]] = {
         "everything": time_everything
  }
 
-def hhelp(program: str):
-    print((f"Subcommands: \n"
-           f"    time [Algorithm][s]         - Measure the time it takes to sort an array of N elements using the specified Algorithm.\n"
-           f"    print <arr> [Algorithm][s]  - Sort and print the given array.\n"
-           f"    help                        - Prints this help message.\n"
-           f"\n"
-           f"    Algorithm                   - One or more of bubblesort, quicksort, selectionsort, everything; DEFAULT: everything.\n"
-           f"\n"
-           f"Flags: \n"
-           f"    -n                          - Specifies the number of elements in the array; DEFAULT: {DEFAULT_N}."))
+def hhelp():
+    logger.info(f"Subcommands: ")
+    logger.info(f"    time [Algorithm][s]         - Measure the time it takes to sort an array of N elements using the specified Algorithm.")
+    logger.info(f"    print <arr> [Algorithm][s]  - Sort and print the given array.")
+    logger.info(f"    help                        - Prints this help message.")
+    logger.info(f"")
+    logger.info(f"    Algorithm                   - One or more of bubblesort, quicksort, selectionsort, everything; DEFAULT: everything.")
+    logger.info(f"")
+    logger.info(f"Flags: ")
+    logger.info(f"    -n                          - Specifies the number of elements in the array; DEFAULT: {DEFAULT_N}.")
 
 def error(msg: str):
-    print(f"ERROR: {msg}", file=sys.stderr)
+    logger.error(msg)
 
 def calculate_random_array() -> list[int]:
     global N
     if N <= 0:
-        print(f"WARNING: N '{N}' was invalid, changing to default value '{DEFAULT_N}'")
+        logger.warning(f"N '{N}' was invalid, changing to default value '{DEFAULT_N}'")
         N = DEFAULT_N
     return [random.randint(0, MAX_VALUE) for _ in range(N)]
 
 def parse_flag(program: str) -> bool:
-    if len(sys.argv) <= 0: return ""
+    if len(sys.argv) <= 0: return False
 
     flag: str = ""
     if sys.argv[0].startswith('-'):
@@ -137,7 +146,7 @@ def parse_flag(program: str) -> bool:
             def invalid_n_func() -> None:
                 error("Please provide a number after -n!")
                 usage(program)
-                hhelp(program)
+                hhelp()
                 exit(1)
 
             if len(sys.argv) <= 0:
@@ -152,18 +161,18 @@ def parse_flag(program: str) -> bool:
         case _:
             error(f"Invalid flag '{flag}'")
             usage(program)
-            hhelp(program)
+            hhelp()
             exit(1)
     return False
 
-def expect_flag_with_value(program: str, expected_flag: str, value_not_provided_msg: str) -> (str, bool):
+def expect_flag_with_value(expected_flag: str, value_not_provided_msg: str) -> Tuple[str, bool]:
     # NOTE: Prefix flag with - if not present
     if not expected_flag.startswith('-'): expected_flag = "-" + expected_flag
     value, found = "", False
     if len(sys.argv) <= 0: return ("", False)
 
     if sys.argv[0].startswith('-') and sys.argv[0] == expected_flag:
-        flag: str = sys.argv.pop(0)
+        sys.argv.pop(0)
         if len(sys.argv) <= 0:
             error(f"{value_not_provided_msg}")
             return ("", False)
@@ -175,16 +184,16 @@ def parse_algorithms(program: str) -> list[str]:
     algorithms: list[str] = []
 
     while len(sys.argv) > 0:
-        algo: string = sys.argv.pop(0).lower()
+        algo: str = sys.argv.pop(0).lower()
         sort_prefix_present: bool = algo.endswith("sort")
         algo.removeprefix("sort")
         if algo in algorithms_time_func_map:
             if not sort_prefix_present: algo += "sort"
             algorithms.append(algo)
         else:
-            error(f"Invalid Aglorithm '{algo}'")
+            error(f"Invalid Agolrithm '{algo}'")
             usage(program)
-            hhelp(program)
+            hhelp()
             exit(1)
 
     # NOTE: Do every algorithms when nothing is provided
@@ -193,28 +202,28 @@ def parse_algorithms(program: str) -> list[str]:
     return algorithms
 
 def time_subcommand(program: str):
-    algorithms: list[str] = parse_algorithms(program)
-
     # TODO: Replace with expect_flag_with_value
     while parse_flag(program):
         pass
 
+    algorithms: list[str] = parse_algorithms(program)
+
     arr: list[int] = calculate_random_array()
 
-    print(f"Sorting {N} elements")
+    logger.info(f"Sorting {N} elements")
 
     for a in algorithms:
         a = a.removesuffix("sort")
         algorithms_time_func_map[a](arr)
 
 def print_quicksort(arr: list[int]):
-    print(f"Quick Sort: {quicksort(arr, 0)}")
+    logger.info(f"Quick Sort: {quicksort(arr, 0)}")
 
 def print_selectionsort(arr: list[int]):
-    print(f"Selection Sort: {selectionsort(arr)}")
+    logger.info(f"Selection Sort: {selectionsort(arr)}")
 
 def print_bubblesort(arr: list[int]):
-    print(f"Bubble Sort: {bubblesort(arr)}")
+    logger.info(f"Bubble Sort: {bubblesort(arr)}")
 
 def print_everything(arr: list[int]):
     threads: list[Thread] = []
@@ -228,7 +237,7 @@ def print_everything(arr: list[int]):
     for t in threads:
         t.join()
 
-algorithms_print_func_map: dict[str, Callable[[], None]] = {
+algorithms_print_func_map: dict[str, Callable[[list[int]], None]] = {
         "quick":      print_quicksort,
         "bubble":     print_bubblesort,
         "selection":  print_selectionsort,
@@ -239,7 +248,7 @@ def print_subcommand(program: str):
     if len(sys.argv) <= 0:
         error("Please provide the array to be sorted!")
         usage(program)
-        hhelp(program)
+        hhelp()
         exit(1)
 
     arr: list[int] = []
@@ -251,7 +260,7 @@ def print_subcommand(program: str):
 
     algorithms: list[str] = parse_algorithms(program)
 
-    print(f"Sorting {len(arr)} elements")
+    logger.info(f"Sorting {len(arr)} elements")
 
     for a in algorithms:
         a = a.removesuffix("sort")
@@ -267,7 +276,7 @@ def main():
     match subcmd.lower():
         case "help":
             usage(program)
-            hhelp(program)
+            hhelp()
             exit(0)
         case "time":
             time_subcommand(program)
@@ -276,12 +285,12 @@ def main():
         case '':
             error(f"Please provide a subcommand")
             usage(program)
-            hhelp(program)
+            hhelp()
             exit(1)
         case _:
             error(f"Invalid subcommand '{subcmd}'")
             usage(program)
-            hhelp(program)
+            hhelp()
             exit(1)
 
 if __name__ == '__main__':
